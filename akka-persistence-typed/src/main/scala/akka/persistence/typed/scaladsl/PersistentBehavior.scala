@@ -7,7 +7,6 @@ package akka.persistence.typed.scaladsl
 import akka.Done
 import akka.actor.typed.BackoffSupervisorStrategy
 import akka.actor.typed.Behavior.DeferredBehavior
-import akka.annotation.InternalApi
 import akka.persistence._
 import akka.persistence.typed.EventAdapter
 import akka.persistence.typed.internal._
@@ -71,6 +70,11 @@ object PersistentBehavior {
 
 }
 
+/**
+ * Further customization of the `PersistentBehavior` can be done with the methods defined here.
+ *
+ * Not for user extension
+ */
 @DoNotInherit trait PersistentBehavior[Command, Event, State] extends DeferredBehavior[Command] {
 
   def persistenceId: PersistenceId

@@ -6,7 +6,7 @@ package docs.akka.cluster.sharding.typed
 
 import scala.concurrent.duration._
 
-import akka.actor.typed.{ ActorRef, ActorSystem, Behavior, Props }
+import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.ShardedEntity
 import docs.akka.persistence.typed.InDepthPersistentBehaviorSpec
@@ -17,7 +17,6 @@ object ShardingCompileOnlySpec {
   val system = ActorSystem(Behaviors.empty, "Sharding")
 
   //#sharding-extension
-  import akka.cluster.sharding.typed.ClusterShardingSettings
   import akka.cluster.sharding.typed.ShardingEnvelope
   import akka.cluster.sharding.typed.scaladsl.ClusterSharding
   import akka.cluster.sharding.typed.scaladsl.EntityTypeKey

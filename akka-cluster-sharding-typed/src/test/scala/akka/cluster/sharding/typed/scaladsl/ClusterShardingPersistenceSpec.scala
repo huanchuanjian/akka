@@ -5,39 +5,26 @@
 package akka.cluster.sharding.typed.scaladsl
 
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
-import akka.actor.typed.Props
-import akka.cluster.sharding.typed.ClusterShardingSettings
 import akka.cluster.typed.Cluster
 import akka.cluster.typed.Join
-import akka.persistence.typed.scaladsl.{ Effect, PersistentBehavior }
-import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.persistence.typed.PersistenceId
+import akka.persistence.typed.scaladsl.Effect
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{ WordSpec, WordSpecLike }
+import org.scalatest.WordSpecLike
 
 object ClusterShardingPersistenceSpec {
   val config = ConfigFactory.parseString(
     """
       akka.actor.provider = cluster
 
-      akka.remote.artery.enabled = true
       akka.remote.netty.tcp.port = 0
       akka.remote.artery.canonical.port = 0
       akka.remote.artery.canonical.hostname = 127.0.0.1
 
-      akka.cluster.jmx.multi-mbeans-in-same-jvm = on
-
-      akka.coordinated-shutdown.terminate-actor-system = off
-
-      akka.actor {
-        serialize-messages = off
-        allow-java-serialization = off
-      }
-
       akka.persistence.journal.plugin = "akka.persistence.journal.inmem"
-    """.stripMargin)
+    """)
 
   sealed trait Command
   final case class Add(s: String) extends Command
@@ -46,9 +33,10 @@ object ClusterShardingPersistenceSpec {
 
   val typeKey = EntityTypeKey[Command]("test")
 
-  def persistentActor(entityId: String): Behavior[Command] =
-    PersistentBehavior[Command, String, String](
-      persistenceId = typeKey.persistenceIdFrom(entityId),
+  def persistentEntity(entityId: String): Behavior[Command] =
+    PersistentEntity[Command, String, String](
+      entityTypeKey = typeKey,
+      entityId = entityId,
       emptyState = "",
       commandHandler = (state, cmd) ⇒ cmd match {
         case Add(s) ⇒ Effect.persist(s)
@@ -73,7 +61,7 @@ class ClusterShardingPersistenceSpec extends ScalaTestWithActorTestKit(ClusterSh
     "start persistent actor" in {
       ClusterSharding(system).start(ShardedEntity(
         typeKey,
-        ctx ⇒ persistentActor(ctx.entityId),
+        ctx ⇒ persistentEntity(ctx.entityId),
         StopPlz
       ))
 

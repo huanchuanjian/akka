@@ -7,24 +7,30 @@ package jdocs.akka.cluster.sharding.typed;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.javadsl.ActorContext;
-import akka.cluster.sharding.typed.javadsl.ClusterSharding;
-import akka.cluster.sharding.typed.javadsl.EntityRef;
-import akka.cluster.sharding.typed.javadsl.EntityTypeKey;
-import akka.cluster.sharding.typed.javadsl.PersistentEntity;
-import akka.cluster.sharding.typed.javadsl.ShardedEntity;
-import akka.persistence.typed.javadsl.CommandHandler;
-import akka.persistence.typed.javadsl.Effect;
-import akka.persistence.typed.javadsl.EventHandler;
-import akka.util.Timeout;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+//#persistent-entity-import
+import akka.cluster.sharding.typed.javadsl.EntityTypeKey;
+import akka.cluster.sharding.typed.javadsl.PersistentEntity;
+import akka.persistence.typed.javadsl.CommandHandler;
+import akka.persistence.typed.javadsl.Effect;
+import akka.persistence.typed.javadsl.EventHandler;
+//#persistent-entity-import
+
+//#persistent-entity-usage-import
+import akka.cluster.sharding.typed.javadsl.ClusterSharding;
+import akka.cluster.sharding.typed.javadsl.EntityRef;
+import akka.cluster.sharding.typed.javadsl.ShardedEntity;
+import akka.util.Timeout;
+//#persistent-entity-usage-import
+
 public class HelloWorldPersistentEntityExample {
 
+  //#persistent-entity-usage
 
   public static class HelloWorldService {
     private final ActorSystem<?> system;
@@ -37,84 +43,91 @@ public class HelloWorldPersistentEntityExample {
       sharding = ClusterSharding.get(system);
 
       sharding.start(
-          ShardedEntity.ofPersistentEntity(
-              HelloWorld.ENTITY_TYPE_KEY,
-              ctx -> new HelloWorld(ctx.actorContext(), ctx.entityId()),
-              Passivate.INSTANCE));
+        ShardedEntity.ofPersistentEntity(
+          HelloWorld.ENTITY_TYPE_KEY,
+          ctx -> new HelloWorld(ctx.getActorContext(), ctx.getEntityId()),
+          HelloWorld.Passivate.INSTANCE));
     }
 
     // usage example
     public CompletionStage<Integer> sayHello(String worldId, String whom) {
-      EntityRef<HelloWorldCommand> entityRef = sharding.entityRefFor(HelloWorld.ENTITY_TYPE_KEY, worldId);
-      CompletionStage<Greeting> result =
-          entityRef.ask(replyTo -> new Greet(whom, replyTo), askTimeout);
+      EntityRef<HelloWorld.Command> entityRef =
+        sharding.entityRefFor(HelloWorld.ENTITY_TYPE_KEY, worldId);
+      CompletionStage<HelloWorld.Greeting> result =
+          entityRef.ask(replyTo -> new HelloWorld.Greet(whom, replyTo), askTimeout);
       return result.thenApply(greeting -> greeting.numberOfPeople);
     }
   }
+  //#persistent-entity-usage
 
-  // Command
-  interface HelloWorldCommand {}
-  public static final class Greet implements HelloWorldCommand {
-    public final String whom;
-    public final ActorRef<Greeting> replyTo;
+  //#persistent-entity
 
-    public Greet(String whom, ActorRef<Greeting> replyTo) {
-      this.whom = whom;
-      this.replyTo = replyTo;
-    }
-  }
-  enum Passivate implements HelloWorldCommand {
-    INSTANCE
-  }
+  public static class HelloWorld extends PersistentEntity<HelloWorld.Command, HelloWorld.Greeted, HelloWorld.KnownPeople> {
 
-  // Response
-  public static final class Greeting {
-    public final String whom;
-    public final int numberOfPeople;
-
-    public Greeting(String whom, int numberOfPeople) {
-      this.whom = whom;
-      this.numberOfPeople = numberOfPeople;
-    }
-  }
-
-  // Event
-  public static final class Greeted {
-    public final String whom;
-
-    public Greeted(String whom) {
-      this.whom = whom;
-    }
-  }
-
-  // State
-  private static final class KnownPeople {
-    private Set<String> names = Collections.emptySet();
-
-    KnownPeople() {
+    // Command
+    interface Command {
     }
 
-    private KnownPeople(Set<String> names) {
-      this.names = names;
+    public static final class Greet implements Command {
+      public final String whom;
+      public final ActorRef<Greeting> replyTo;
+
+      public Greet(String whom, ActorRef<Greeting> replyTo) {
+        this.whom = whom;
+        this.replyTo = replyTo;
+      }
     }
 
-    KnownPeople add(String name) {
-      Set<String> newNames = new HashSet<>(names);
-      newNames.add(name);
-      return new KnownPeople(newNames);
+    enum Passivate implements Command {
+      INSTANCE
     }
 
-    int numberOfPeople() {
-      return names.size();
+    // Response
+    public static final class Greeting {
+      public final String whom;
+      public final int numberOfPeople;
+
+      public Greeting(String whom, int numberOfPeople) {
+        this.whom = whom;
+        this.numberOfPeople = numberOfPeople;
+      }
     }
-  }
 
-  public static class HelloWorld extends PersistentEntity<HelloWorldCommand, Greeted, KnownPeople> {
+    // Event
+    public static final class Greeted {
+      public final String whom;
 
-    public static final EntityTypeKey<HelloWorldCommand> ENTITY_TYPE_KEY =
-        EntityTypeKey.create(HelloWorldCommand.class, "HelloWorld");
+      public Greeted(String whom) {
+        this.whom = whom;
+      }
+    }
 
-    public HelloWorld(ActorContext<HelloWorldCommand> ctx, String entityId) {
+    // State
+    static final class KnownPeople {
+      private Set<String> names = Collections.emptySet();
+
+      KnownPeople() {
+      }
+
+      private KnownPeople(Set<String> names) {
+        this.names = names;
+      }
+
+      KnownPeople add(String name) {
+        Set<String> newNames = new HashSet<>(names);
+        newNames.add(name);
+        return new KnownPeople(newNames);
+      }
+
+      int numberOfPeople() {
+        return names.size();
+      }
+    }
+
+    public static final EntityTypeKey<Command> ENTITY_TYPE_KEY =
+      EntityTypeKey.create(Command.class, "HelloWorld");
+
+    public HelloWorld(ActorContext<Command> ctx, String entityId) {
       super(ENTITY_TYPE_KEY, entityId);
     }
 
@@ -124,14 +137,14 @@ public class HelloWorldPersistentEntityExample {
     }
 
     @Override
-    public CommandHandler<HelloWorldCommand, Greeted, KnownPeople> commandHandler() {
+    public CommandHandler<Command, Greeted, KnownPeople> commandHandler() {
       return commandHandlerBuilder(KnownPeople.class)
-          .matchCommand(Greet.class, this::greet)
-          .matchCommand(Greet.class, this::passivate)
-          .build();
+        .matchCommand(Greet.class, this::greet)
+        .matchCommand(Greet.class, this::passivate)
+        .build();
     }
 
-    private Effect<Greeted, KnownPeople> passivate(KnownPeople state, HelloWorldCommand cmd) {
+    private Effect<Greeted, KnownPeople> passivate(KnownPeople state, Command cmd) {
       return Effect().stop();
     }
 
@@ -142,11 +155,9 @@ public class HelloWorldPersistentEntityExample {
 
     @Override
     public EventHandler<KnownPeople, Greeted> eventHandler() {
-      return this::applyEvent;
+      return (state, evt) -> state.add(evt.whom);
     }
 
-    private KnownPeople applyEvent(KnownPeople state, Greeted evt) {
-      return state.add(evt.whom);
-    }
   }
+  //#persistent-entity
 }

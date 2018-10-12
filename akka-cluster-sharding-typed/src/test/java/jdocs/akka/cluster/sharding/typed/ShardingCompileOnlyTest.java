@@ -9,11 +9,9 @@ import java.time.Duration;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.Props;
 import akka.actor.typed.javadsl.Behaviors;
 
 //#import
-import akka.cluster.sharding.typed.ClusterShardingSettings;
 import akka.cluster.sharding.typed.ShardingEnvelope;
 import akka.cluster.sharding.typed.javadsl.ClusterSharding;
 import akka.cluster.sharding.typed.javadsl.EntityTypeKey;
@@ -107,7 +105,7 @@ public class ShardingCompileOnlyTest {
     sharding.start(
       ShardedEntity.of(
         typeKey,
-        ctx -> counter2(ctx.shard(), ctx.entityId()),
+        ctx -> counter2(ctx.getShard(), ctx.getEntityId()),
         new GoodByeCounter()));
     //#counter-passivate-start
   }
@@ -128,7 +126,7 @@ public class ShardingCompileOnlyTest {
     ActorRef<ShardingEnvelope<CounterCommand>> shardRegion = sharding.start(
       ShardedEntity.of(
         typeKey,
-        ctx -> counter(ctx.entityId(),0),
+        ctx -> counter(ctx.getEntityId(),0),
         new GoodByeCounter()));
     //#start
 
@@ -152,7 +150,7 @@ public class ShardingCompileOnlyTest {
     sharding.start(
       ShardedEntity.of(
         blogTypeKey,
-        ctx -> BlogBehavior.behavior(ctx.entityId()),
+        ctx -> BlogBehavior.behavior(ctx.getEntityId()),
         new PassivatePost()));
     //#persistence
   }

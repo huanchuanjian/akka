@@ -306,9 +306,16 @@ final class ShardedEntity[M, E] private[akka] (
  * Parameter to [[ShardedEntity.of]]
  */
 final class ShardedEntityContext[M](
-  val entityId:     String,
-  val shard:        ActorRef[ClusterSharding.ShardCommand],
-  val actorContext: ActorContext[M])
+  entityId:     String,
+  shard:        ActorRef[ClusterSharding.ShardCommand],
+  actorContext: ActorContext[M]) {
+
+  def getEntityId: String = entityId
+
+  def getShard: ActorRef[ClusterSharding.ShardCommand] = shard
+
+  def getActorContext: ActorContext[M] = actorContext
+}
 
 /** Allows starting a specific Sharded Entity by its entity identifier */
 object StartEntity {
