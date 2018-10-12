@@ -11,7 +11,6 @@ import akka.persistence.typed.{ SideEffect, Stop }
 import scala.collection.JavaConverters._
 
 import akka.persistence.typed.ExpectingReply
-import akka.persistence.typed.NoReplyEffectImpl
 
 object EffectFactory extends EffectFactories[Nothing, Nothing, Nothing]
 
@@ -65,8 +64,8 @@ object EffectFactory extends EffectFactories[Nothing, Nothing, Nothing]
    * isn't a [[ReplyEffect]]. This `noReply` can be used as a conscious decision that a reply shouldn't be
    * sent for a specific command or the reply will be sent later.
    */
-  def noReply[ReplyMessage](cmd: ExpectingReply[ReplyMessage]): ReplyEffect[Event, State] =
-    none.thenNoReply[ReplyMessage](cmd)
+  def noReply(): ReplyEffect[Event, State] =
+    none.thenNoReply()
 }
 
 /**
@@ -113,7 +112,7 @@ object EffectFactory extends EffectFactories[Nothing, Nothing, Nothing]
    * isn't a [[ReplyEffect]]. This `thenNoReply` can be used as a conscious decision that a reply shouldn't be
    * sent for a specific command or the reply will be sent later.
    */
-  def thenNoReply[ReplyMessage](cmd: ExpectingReply[ReplyMessage]): ReplyEffect[Event, State]
+  def thenNoReply(): ReplyEffect[Event, State]
 
 }
 

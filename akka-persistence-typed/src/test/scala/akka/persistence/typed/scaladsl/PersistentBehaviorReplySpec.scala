@@ -74,7 +74,7 @@ object PersistentBehaviorReplySpec {
         case cmd: IncrementReplyLater ⇒
           Effect.persist(Incremented(1))
             .thenRun((_: State) ⇒ ctx.self ! ReplyNow(cmd.replyTo))
-            .thenNoReply(cmd)
+            .thenNoReply()
 
         case cmd: ReplyNow ⇒
           Effect.reply(cmd)(Done)

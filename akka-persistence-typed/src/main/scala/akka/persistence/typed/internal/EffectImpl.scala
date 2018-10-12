@@ -22,7 +22,7 @@ private[akka] abstract class EffectImpl[+Event, State] extends javadsl.ReplyEffe
   override def andThen(chainedEffect: SideEffect[State]): EffectImpl[Event, State] =
     CompositeEffect(this, chainedEffect)
 
-  override def thenNoReply[ReplyMessage](cmd: ExpectingReply[ReplyMessage]): EffectImpl[Event, State] =
+  override def thenNoReply(): EffectImpl[Event, State] =
     CompositeEffect(this, new NoReplyEffectImpl[State])
 
 }

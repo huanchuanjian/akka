@@ -4,17 +4,13 @@
 
 package akka.persistence.typed.scaladsl
 
-import akka.japi.function
 import akka.annotation.DoNotInherit
 import akka.persistence.typed.{ SideEffect, Stop }
 import akka.persistence.typed.internal._
 import scala.collection.{ immutable ⇒ im }
 
-import akka.Done
 import akka.persistence.typed.ExpectingReply
-import akka.persistence.typed.NoReplyEffectImpl
 import akka.persistence.typed.ReplyEffectImpl
-import akka.persistence.typed.scaladsl.Effect.reply
 
 /**
  * Factories for effects - how a persistent actor reacts on a command
@@ -84,8 +80,8 @@ object Effect {
    * isn't a [[ReplyEffect]]. This `noReply` can be used as a conscious decision that a reply shouldn't be
    * sent for a specific command or the reply will be sent later.
    */
-  def noReply[ReplyMessage, Event, State](cmd: ExpectingReply[ReplyMessage]): ReplyEffect[Event, State] =
-    none[Event, State].thenNoReply[ReplyMessage](cmd)
+  def noReply[Event, State]: ReplyEffect[Event, State] =
+    none.thenNoReply()
 
 }
 
@@ -141,7 +137,7 @@ trait Effect[+Event, State] {
    * isn't a [[ReplyEffect]]. This `thenNoReply` can be used as a conscious decision that a reply shouldn't be
    * sent for a specific command or the reply will be sent later.
    */
-  def thenNoReply[ReplyMessage](cmd: ExpectingReply[ReplyMessage]): ReplyEffect[Event, State]
+  def thenNoReply(): ReplyEffect[Event, State]
 
 }
 
